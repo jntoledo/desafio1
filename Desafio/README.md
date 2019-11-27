@@ -287,18 +287,23 @@ Save and exit.
 
 Configure agora o **SELinux and Firewalld**. Execute os comandos abaixo.
 
+```sh
 sestatus
 
 SELinux is in 'Enforcing' mode.
-
+```
 Instale o SELinux management tool 'policycoreutils-python' com o comando yum abaixo.
 
+```sh
+
 yum -y install policycoreutils-python
+```
 
 Vá até o diretório '/var/www/' directory.
 
+```sh
 cd /var/www/
-
+```
 Rode os comandos abaixo, para mudar a segurança para o Magento e seus arquivos.
 
 ```sh
@@ -312,20 +317,293 @@ restorecon -Rv '/var/www/magento2/'
 
 Instale o firewalld package se você não tiver instalado no seu servidor.
 
+```sh
 yum -y install firewalld
 systemctl start firewalld
 systemctl enable firewalld
+```
 
 Abra as portas para HTTP and HTTPS para acessar a URL do Magento.
 
+```sh
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
+```
 
 Verifique as portas abertas com o comando abaixo.
 
+```sh
 firewall-cmd --list-all
-
+```
 Abra a sua URL do magento para testar. Magento já esta instalado e configurado.
 
+
 ## **Vamos instalar o Wordpress**
+
+O conteúdo do WordPress pode ser baixado usando os comandos abaixo.
+
+```sh
+# cd / opt
+# wget https://wordpress.org/latest.tar.gz
+Quando o download terminar, execute o seguinte comando: extraia-o.
+
+# tar -xvzf latest.tar.gz -C / usr / share / nginx / html /
+```
+
+Em seguida, altere as permissões e a propriedade das pastas de conteúdo do WordPress.
+```sh
+# chown -R nginx: nginx / usr / share / nginx / html / wordpress
+# chmod -R 755 / usr / share / nginx / html / wordpress
+```
+
+Agora vamos criar um banco de dados mysql e um usuário para o wordpress. Use o seguinte conjunto de comandos para criar banco de dados e usuário.
+
+```sh
+# mysql -u root -p
+mysql> CREATE DATABASE techoism_db;
+mysql> GRANT ALL ON techoism_db. * para 'techoism_user' @ 'localhost' IDENTIFICADO POR 'secretpassword';
+mysql> PRIVILÉGIOS DE FLUSH;
+mysql> sair
+```
+
+Agora vamos criar o arquivo Virtual Host.Abra o arquivo de configuração do Nginx com qualquer editor adicione as seguintes linhas:
+
+```sh
+# vi /etc/nginx/conf.d/blog-juan.estudojt.tk
+```
+Copie e cole a seguinte config.
+```sh
+server {
+        listen 80;
+        server_name blog-juan.estudojt.tk;
+        root   /var/www/html/blog-juan/wordpress;
+        index index.php index.html;
+        location / {
+                     try_files $uri $uri;
+                    }
+
+        location ~ .php$ {
+                try_files $uri;
+                fastcgi_pass    127.0.0.1:9000;
+                fastcgi_index   index.php;
+                fastcgi_param SCRIPT_FILENAME /var/www/html/blog-juan/wordpress$fastcgi_script_name;
+                include fastcgi_params;
+                        }
+}
+```
+Em seguida, reinicie o serviço nginx para refletir as alterações.
+```sh
+systemctl restart nginx
+```
+
+Configurando a instalação do WordPress. Use o seguinte comando para configurar a instalação do WordPress.
+
+```sh
+cd /var/www/html/blog-juan/wordpress
+cp wp-config-sample.php wp-config.php
+chmod 777 wp-config.php
+chown nginx: nginx wp-config.php
+Abra o arquivo de configuração do wordpress e altere a configuração do MySQL.
+
+vim wp-config.php
+
+// ** Configurações do MySQL - Você pode obter essas informações do seu host ** //
+/ ** O nome do banco de dados para WordPress * /
+define ('DB_NAME', 'techoism_db');
+
+/ ** nome de usuário do banco de dados MySQL * /
+define ('DB_USER', 'techoism_user');
+
+/ ** senha do banco de dados MySQL * /
+define ('DB_PASSWORD', 'redhat');
+
+/ ** nome do host MySQL * /
+define ('DB_HOST', 'localhost');
+
+/ ** Database Charset para usar na criação de tabelas de banco de dados. * /
+define ('DB_CHARSET', 'utf8');
+
+/ ** O tipo Agrupar banco de dados. Não mude isso em caso de dúvida. * /
+define ('DB_COLLATE', '');
+```
+Instalação do WordPress efetuada. Agora abra seu navegador e digite o endereço configurado.
+
+> http://blog-juan.estudojt.tk
+http://Server-IP
+
+## **Para finalizar vamos instalar o Tomcat**
+
+**Pré-requisitos**
+
+O usuário que você está efetuando login deve ter privilégios de sudo para poder instalar pacotes.
+
+**Instale o OpenJDK**
+
+O Tomcat 9 requer Java SE 8 ou posterior. Instalaremos o OpenJDK.
+
+```sh
+sudo yum install java-1.8.0-openjdk-devel
+```
+
+Vamos criar usuário e grupo do sistema com o diretório inicial /opt/tomcatque executará o serviço Tomcat:
+```sh
+sudo useradd -m -U -d /opt/tomcat -s /bin/false tomcat
+```
+Baixaremos a versão mais recente do Tomcat 9.0.x na página de downloads do Tomcat . Navegue para o /tmp diretório e faça o download do arquivo zip do Tomcat usando o seguinte comando wget :
+
+```sh
+cd /tmp
+wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v9.0.27/bin/apache-tomcat-9.0.27.tar.gz
+```
+
+Quando o download estiver concluído, extraia o arquivo tar :
+```sh
+tar -xf apache-tomcat-9.0.27.tar.gz
+```
+
+Mova os arquivos de origem do Tomcat para ele no /opt/tomcat:
+```sh
+sudo mv apache-tomcat-9.0.27 /opt/tomcat/
+```
+O usuário do tomcat que configuramos anteriormente precisa ter acesso ao diretório de instalação do tomcat. Execute o seguinte comando para alterar a propriedade do diretório para usuário e grupo tomcat:
+
+```sh
+sudo chown -R tomcat: /opt/tomcat
+```
+Torne os scripts dentro do bindiretório executáveis, através do comando:
+
+```sh
+sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+```
+
+Precisamos criar uma unidade systemd.Para fazer o Tomcat funcionar como um serviço, abra seu editor de texto e crie um tomcat.service no caminho **/etc/systemd/system/**
+
+```sh
+sudo nano /etc/systemd/system/tomcat.service
+```
+
+Cole o seguinte conteúdo:
+
+```sh
+[Unit]
+Description=Tomcat 9 servlet container
+After=network.target
+
+[Service]
+Type=forking
+
+User=tomcat
+Group=tomcat
+
+Environment="JAVA_HOME=/usr/lib/jvm/jre"
+Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
+
+Environment="CATALINA_BASE=/opt/tomcat/latest"
+Environment="CATALINA_HOME=/opt/tomcat/latest"
+Environment="CATALINA_PID=/opt/tomcat/latest/temp/tomcat.pid"
+Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+ExecStart=/opt/tomcat/latest/bin/startup.sh
+ExecStop=/opt/tomcat/latest/bin/shutdown.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Salve e feche o arquivo.
+
+Notifique o systemd de que criamos um novo arquivo de unidade, depois ative e verifique se o serviço esta iniciado.
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable tomcat
+sudo systemctl start tomcat
+sudo systemctl status tomcat
+```
+Ele irá retornar
+```sh
+● tomcat.service - Tomcat 9 servlet container
+   Loaded: loaded (/etc/systemd/system/tomcat.service; enabled; vendor preset: disabled)
+   Active: active (running) since Thu 2018-11-15 20:47:50 UTC; 4s ago
+  Process: 1759 ExecStart=/opt/tomcat/latest/bin/startup.sh (code=exited, status=0/SUCCESS)
+ Main PID: 1767 (java)
+   CGroup: /system.slice/tomcat.service
+```
+
+Vamos ajustar o firewall para que tenhamos acesso ao tomcat na web através da porta 8080. Use os seguintes comandos para abrir a porta:
+
+```sh
+
+sudo firewall-cmd --zone=public --permanent --add-port=8080/tcp
+sudo firewall-cmd --reload
+```
+
+Os usuários do Tomcat e suas funções são definidas no tomcat-users.xml. Se você abrir o arquivo, notará que ele é preenchido com comentários e exemplos que descrevem como configurá-lo.
+
+```sh
+sudo nano /opt/tomcat/latest/conf/tomcat-users.xml
+```
+Para adicionar um novo usuário que possa acessar a interface da web do tomcat (manager-gui e admin-gui), é necessário definir o usuário no tomcat-users.xml, como mostrado abaixo. Certifique-se de alterar o nome de usuário e a senha para algo mais seguro:
+
+``h
+/opt/tomcat/latest/conf/tomcat-users.xml
+<tomcat-users>
+<!--
+    Comments
+-->
+   <role rolename="admin-gui"/>
+   <role rolename="manager-gui"/>
+   <user username="admin" password="admin_password" roles="admin-gui,manager-gui"/>
+</tomcat-users>
+```
+
+Por padrão, a interface de gerenciamento da web do Tomcat está configurada para permitir o acesso apenas a partir do host local. Se você quiser acessar a interface da web a partir de um IP remoto ou de qualquer lugar que não seja recomendado por ser um risco à segurança, abra os seguintes arquivos e faça as seguintes alterações.
+
+Se você precisar acessar a interface da web de qualquer lugar, abra os seguintes arquivos e comente ou remova as linhas destacadas em amarelo:
+
+```sh
+/opt/tomcat/latest/webapps/manager/META-INF/context.xml
+<Context antiResourceLocking="false" privileged="true" >
+<!--
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+-->
+</Context>
+
+/opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+<Context antiResourceLocking="false" privileged="true" >
+<!--
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+-->
+</Context>
+```
+
+Se você precisar acessar a interface da Web apenas a partir de um IP específico, em vez de comentar os blocos, adicione seu IP público à lista. Digamos que seu IP público seja 10.10.10.10. Você deseja permitir o acesso apenas a partir desse IP:
+
+```sh
+/opt/tomcat/latest/webapps/manager/META-INF/context.xml
+<Context antiResourceLocking="false" privileged="true" >
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1|41.41.41.41" />
+</Context>
+
+/opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+<Context antiResourceLocking="false" privileged="true" >
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1|41.41.41.41" />
+</Context>
+```
+
+A lista de endereços IP permitidos é uma lista separada por barra vertical |. Você pode adicionar endereços IP únicos ou usar expressões regulares.
+
+Reinicie o serviço Tomcat para aplicar as alterações:
+
+```sh
+sudo systemctl restart tomcat
+```
+
+Tomcat instalado, agora vamos testar. Abra seu navegador e digite:
+
+> http://<your_domain_or_IP_address>:8080
