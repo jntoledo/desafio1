@@ -71,7 +71,7 @@ Tire o comentário da linha **session path directory** e altere conforme abaixo.
 
 > session.save_path = "/var/lib/php/session"
 
-Save and exit.
+Salve e saia.
 
 Agora, vamos editar o **www.conf** com o vim.
 
@@ -99,6 +99,7 @@ listen.mode = 0660
 ```
 
 Finalmente, tire o comentário do **PHP-FPM environment** conforme abaixo.
+
 ```sh
 env[HOSTNAME] = $HOSTNAME
 env[PATH] = /usr/local/bin:/usr/bin:/bin
@@ -107,7 +108,7 @@ env[TMPDIR] = /tmp
 env[TEMP] = /tmp
 ```
 
-Save and exit.
+Salve e saia.
 
 Crie agora um novo diretório para o path de sessão e também para o arquivo php sock php. Altere também de permissão para o usuário e grupo 'nginx' realizar alterações na pasta.
 
@@ -119,6 +120,7 @@ chown -R nginx:nginx /run/php/
 ```
 
 PHP-FPM7 esta completamente instalado e configurado. Vamos startar o daemon e habilitar para ele iniciar no boot. Execute os comandos abaixo.
+
 ```sh
 systemctl start php-fpm
 systemctl enable php-fpm
@@ -143,11 +145,13 @@ MySQL 5.7 vem instalado com uma senha padrão de root. Para visualiar a senha ex
 grep 'temporary' /var/log/mysqld.log
 ```
 Com a senha anotada, vamos trocar a senha de root. Conecte-se ao shell do mysql com o usuário root e a senha padrão.
+
 ```sh
 mysql -u root -p
 TYPE DEFAULT PASSWORD
 ```
 Altere a senha padrão. Precisamos alterar a mesma para uma senha segura. Conforme comando abaixo.
+
 ```sh
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'Senhasegura@aqui';
 flush privileges;
@@ -186,27 +190,35 @@ wget https://github.com/magento/magento2/archive/2.1.zip
 ```
 Caso não tenha instalado, instale o unzip
 
+```sh
 yum -y install unzip
+```
 
 Extraia o magento e renomeie o direitório para 'magento2'
 
+```sh
 unzip 2.1.zip
 mv magento2-2.1 magento2
+```
 
 **Instale as dependências do PHP**
 
+```sh
 cd magento2
 composer install -v
-
+```
 Configure Magento Virtual Host
 
 Vá até o diretório do Nginx e crie um novo **virtual host** chamado **magento.conf** no diretório **conf.d**.
 
+```sh
 cd /etc/nginx/
 vim conf.d/magento.conf
+```
 
 Copie e cole a configuração abaixo.
 
+```sh
 upstream fastcgi_backend {
         server  unix:/run/php/php-fpm.sock;
 }
@@ -219,12 +231,15 @@ server {
         set $MAGE_MODE developer;
         include /var/www/magento2/nginx.conf.sample;
 }
-Save and exit.
+```
+Salve e saia do arquivo.
 
-Agora teste a cofniguração, e depois reinicie o serviço do Nginx.
+Agora teste a configuração, e depois reinicie o serviço do Nginx.
 
+```sh
 nginx -t
 systemctl restart nginx
+```
 
 **Instalando o Magento 2.1**
 
@@ -232,10 +247,12 @@ systemctl restart nginx
 
 Vá até o diretório **magento2** para instalar o Magento com o comando:
 
+```sh
 cd /var/www/magento2
-
+```
 Rode o comando abaixo e se certifique de ter configurado corretamente. Conforme instruções.
 
+```sh
 bin/magento setup:install --backend-frontname="adminlogin" \
 --key="biY8vdWx4w8KV5Q59380Fejy36l6ssUb" \
 --db-host="localhost" \
@@ -267,23 +284,28 @@ Change value for:
 --admin-user: coloque um nome para o usuário admin
 --admin-password: senha para esse usuário admin
 --admin-email: e-mail da conta criada
-
+```
 Magento 2.1 está instalado. Rode o comando abaixo, para alterar a permissão do diretório, para deixar o usuário e grupo **Nginx** com permissão de acesso total a pasta.
 
+```sh
 chmod 700 /var/www/magento2/app/etc
 chown -R nginx:nginx /var/www/magento2
-Configure Magento Cron
+```
 
-Esse cronjob precisar do **Magento indexer**. Crie um novo usuário cronjob **nginx**.
+Vmaos configurar o Magento Cron. Esse cronjob precisar do **Magento indexer**. Crie um novo usuário cronjob **nginx**.
 
+```sh
 crontab -u nginx -e
+```
 
 Cole a configuração abaixo.
-
+```sh
 * * * * * /usr/bin/php /var/www/magento2/bin/magento cron:run | grep -v "Ran jobs by schedule" >> /var/www/magento2/var/log/magento.cron.log
 * * * * * /usr/bin/php /var/www/magento2/update/cron.php >> /var/www/magento2/var/log/update.cron.log
 * * * * * /usr/bin/php /var/www/magento2/bin/magento setup:cron:run >> /var/www/magento2/var/log/setup.cron.log
-Save and exit.
+```
+
+Salve a config e saia.
 
 Configure agora o **SELinux and Firewalld**. Execute os comandos abaixo.
 
