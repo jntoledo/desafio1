@@ -1,0 +1,13 @@
+---
+- hosts: aws
+  user: centos
+  tasks:
+  become: true
+
+  roles:
+  - common
+  - php
+  - mariadb
+  - nginx
+  - wordpress
+  

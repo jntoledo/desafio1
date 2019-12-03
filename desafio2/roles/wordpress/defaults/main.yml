@@ -1,0 +1,7 @@
+---
+# defaults file for wordpress
+
+database_name_here: wordpress
+username_here: wordpress
+password_here: wordpress
+host_db: localhost
