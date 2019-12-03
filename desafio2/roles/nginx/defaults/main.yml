@@ -1,4 +1,0 @@
----
-# defaults file for nginx
-seu_site: 54.160.145.11
-folder_wordpress: /var/www/html/blog/wordpress
