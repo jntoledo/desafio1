@@ -1,4 +1,8 @@
 ---
+
+- name: Restart Daemon
+  command: systemctl daemon-reload
+  
 - name: start php-fpm
   service: 
     name: php-fpm 

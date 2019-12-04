@@ -1,14 +1,14 @@
 ---
+# tasks file for wordpress
 
 - name: Criando diretório
   file:
       path: /var/www/html/blog
-      recurse: yes 
       state: directory
       owner: nginx
       group: nginx
-      mode: '0755'
-      
+      mode: '0777'
+      recurse: yes
         
 - name: Download Wordpress
   get_url:
@@ -26,13 +26,12 @@
     path: /var/www/html/blog/wordpress
     owner: nginx
     group: nginx
-    mode: '0755'
-
-##- name: Move foo to bar
-#   command: mv /var/www/html/blog/wordpress/wp-config-sample.php /var/www/html/blog/wordpress/wp-config.php
+    mode: '0777'
 
 - name: Copiar arquivo de wp-config do blog para a pasta do wordpress
   template:
         src: wp-config.j2
         dest: /var/www/html/blog/wordpress/wp-config.php
-  notify: restart nginx
+
+- name: restart nginx
+  command: systemctl restart nginx

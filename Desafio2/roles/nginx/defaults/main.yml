@@ -1,4 +1,4 @@
 ---
-# defaults file for nginx
-seu_site: 54.160.145.11
+# Coloque aqui o IP ou Dns do seu Blog.
+seu_site: 52.87.239.88
 folder_wordpress: /var/www/html/blog/wordpress

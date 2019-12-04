@@ -1,5 +1,5 @@
 ---
-  
+
 - name: Instalar MariaDB
   yum:
     name: "{{ packages }}"
@@ -7,6 +7,14 @@
     packages:
       - mariadb
       - mariadb-server
+      - python-pip 
+    state: present
+    update_cache: yes
+
+- name: "Verificando se o  pymysql esta presente"
+  pip:
+    name: PyMySQL
+    state: present
 
 - name: start mariadb
   command: systemctl start mariadb

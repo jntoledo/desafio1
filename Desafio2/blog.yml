@@ -6,8 +6,7 @@
 
   roles:
   - common
-  - php
   - mariadb
   - nginx
+  - php
   - wordpress
-  

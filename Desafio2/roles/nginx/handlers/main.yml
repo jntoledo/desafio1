@@ -1,7 +1,8 @@
 ---
+
 - name: reload daemon
   service: 
-    name: daemon_reload
+    name: daemon-reload
 
 - name: start nginx
   service: 
@@ -14,8 +15,3 @@
     name: nginx 
     state: restarted
     enabled: yes
-
-
-
-
- 

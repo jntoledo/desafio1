@@ -1,7 +1,10 @@
 ---
 
 - name: Atualizando Centos 7
-  command: yum update
+  yum:
+    name: '*'
+    state: latest
+    
 
 - name: Instalando pacotes Padrões
   yum:
@@ -9,25 +12,19 @@
   vars:
     packages:
       - epel-release
-      - python2
-      - python-pip
       - net-tools
       - wget
+      - curl
       - vim
-      - curl      
-    state: present
+      - unzip
+    state: latest
     update_cache: yes
 
-- name: "Verificando se o  pymysql esta presente"
-  pip:
-    name: PyMySQL
-    state: present
+#- name: Adicionando grupo nginx
+#  group: 
+#    name: nginx
 
-- name: Adicionando grupo nginx
-  group: 
-    name: nginx
-
-- name: Adicionando usuário nginx
-  user: 
-    name: nginx 
-    group: nginx
+#- name: Adicionando usuário nginx
+#  user: 
+#    name: nginx 
+#    group: nginx
