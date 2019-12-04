@@ -1,5 +1,5 @@
 ---
-- hosts: aws
+- hosts: servidor
   user: centos
   tasks:
   become: true
